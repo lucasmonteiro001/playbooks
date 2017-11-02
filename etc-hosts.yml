@@ -1,0 +1,36 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    - regexp_ip_addr: '(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])'
+    - is_test: no
+
+  tasks:
+    - name: Create an empty file if none exists
+      copy:
+        content: ""
+        dest: /tmp/test
+        force: no
+      when: is_test
+
+    - name: Verify that hosts exists
+      file:
+        path: "{{ item }}"
+        state: file
+      with_items:
+        - /etc/hosts
+    
+    - become: yes
+      lineinfile:
+        path: /etc/hosts
+        regexp: '^\s*{{ regexp_ip_addr }}\s+{{ item.name }}$'
+        line: "{{ item.ip }} {{ item.name }}"
+      with_items:
+        - name: 'jenkins.dev'
+          ip: '192.168.55.100'
+        - name: 'mongo.dev'
+          ip: '192.168.55.101'  
+
+    
